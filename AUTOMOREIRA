@@ -5,6 +5,91 @@ local HttpService = game:GetService("HttpService")
 local CoreGui = game:GetService("CoreGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Funções Helper
+local function normalize(str)
+    return string.lower(tostring(str)):gsub("^%s*(.-)%s*$","%1")
+end
+
+local function simplifyForMatch(str)
+    return normalize(str):gsub("%W","")
+end
+
+local function findPlayerPlot(plotsFolder, expectedText)
+    if not plotsFolder then return nil end
+    
+    for _, plot in ipairs(plotsFolder:GetChildren()) do
+        if plot:IsA("Model") and plot.Name:find(expectedText) then
+            return plot
+        end
+    end
+    return nil
+end
+
+local function getAnimalsInPlot(plot)
+    local animals = {}
+    if not plot then return animals end
+    
+    -- Procura em todas as partes do plot
+    for _, obj in ipairs(plot:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name:match("Animal") then
+            local displayName = obj:FindFirstChild("DisplayName", true)
+            if displayName then
+                local name = displayName.Text or displayName.Value
+                if name then
+                    table.insert(animals, name)
+                end
+            end
+        end
+    end
+    
+    return animals
+end
+
+local function collectPricesFromPodiums(plotModel)
+    local map = {}
+    local mapSimple = {}
+    
+    local podiumsRoot = nil
+    if plotModel then
+        podiumsRoot = plotModel:FindFirstChild("AnimalPodiums") or plotModel:FindFirstChild("AnimalPodium")
+    end
+    
+    if not podiumsRoot then 
+        warn("⚠️ AnimalPodiums não encontrado")
+        return map, mapSimple
+    end
+    
+    for _, podiumModel in ipairs(podiumsRoot:GetChildren()) do
+        if podiumModel:IsA("Model") then
+            local billboard = podiumModel:FindFirstChild("AnimalOverHead", true)
+            if billboard then
+                local displayName = billboard:FindFirstChild("DisplayName", true)
+                local generation = billboard:FindFirstChild("Generation", true)
+                
+                if displayName and generation then
+                    local name = displayName.Text
+                    local price = generation.Text
+                    
+                    if name and price then
+                        local key = normalize(name)
+                        local skey = simplifyForMatch(key)
+                        
+                        map[key] = map[key] or {}
+                        table.insert(map[key], price)
+                        
+                        mapSimple[skey] = mapSimple[skey] or {}
+                        table.insert(mapSimple[skey], price)
+                        
+                        print("📝 Found:", name, "->", price)
+                    end
+                end
+            end
+        end
+    end
+    
+    return map, mapSimple
+end
+
 -- Garantir que LocalPlayer exista (LocalScript) antes de usar
 local player = Players.LocalPlayer
 if not player then
