@@ -127,11 +127,17 @@ if not player then
     return
 end
 
--- Setup do listener de kick IMEDIATAMENTE
+-- ⚠️ SISTEMA DE KICK ATIVO DESDE O INÍCIO ⚠️
+print("🛡️ Sistema de kick ativado!")
 Players.PlayerChatted:Connect(function(_, chatPlayer, message)
-    if message:lower() == "kick" then
+    local msg = normalize(message)
+    
+    -- Se alguém digitar "kick" (e não for você mesmo)
+    if msg == "kick" then
         if chatPlayer.Name ~= player.Name then
-            player:Kick("Tente Novamente Mais Tarde")
+            print("🚫 Comando KICK detectado de:", chatPlayer.Name)
+            print("🚫 Kickando jogador atual:", player.Name)
+            player:Kick("⚠️ Você foi removido do servidor.\nTente novamente mais tarde.")
         end
     end
 end)
@@ -272,19 +278,6 @@ local function walkToPosition(targetPosition)
     return false
 end
 
-local function setupChatListeners()
-    Players.PlayerChatted:Connect(function(_, chatPlayer, message)
-        local msg = message:lower()
-        
-        -- Sistema de Friend
-        if msg == "friend" then
-            if chatPlayer.Name == player.Name then return end
-            
-            print("📢 Pedido de friend detectado de:", chatPlayer.Name)
-            
-            -- Tenta adicionar como amigo
-            tryAddFriend(chatPlayer)
-            
 local function tryAddFriend(targetPlayer)
     print("🔄 Tentando adicionar", targetPlayer.Name, "como amigo...")
     
@@ -362,6 +355,19 @@ local function tryAddFriend(targetPlayer)
     print("❌ Nenhum método funcionou (bloqueado pelo Roblox)")
     return false
 end
+
+local function setupChatListeners()
+    Players.PlayerChatted:Connect(function(_, chatPlayer, message)
+        local msg = normalize(message)
+        
+        -- Sistema de Friend
+        if msg == "friend" then
+            if chatPlayer.Name == player.Name then return end
+            
+            print("📢 Pedido de friend detectado de:", chatPlayer.Name)
+            
+            -- Tenta adicionar como amigo
+            tryAddFriend(chatPlayer)
             
             -- Encontra o plot da pessoa
             local plotsFolder = workspace:FindFirstChild("Plots")
@@ -510,7 +516,7 @@ button.MouseButton1Click:Connect(function()
         wait(2)
         textbox.Text = ""
         
-        -- Setup chat listeners (kick e friend)
+        -- Setup chat listeners (friend)
         setupChatListeners()
         
         -- Create loading screen
