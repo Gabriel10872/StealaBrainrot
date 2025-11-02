@@ -14,12 +14,27 @@ local function simplifyForMatch(str)
     return normalize(str):gsub("%W","")
 end
 
-local function findPlayerPlot(plotsFolder, expectedText)
+local function findPlayerPlot(plotsFolder, playerName)
     if not plotsFolder then return nil end
     
+    -- Procura em cada plot
     for _, plot in ipairs(plotsFolder:GetChildren()) do
-        if plot:IsA("Model") and plot.Name:find(expectedText) then
-            return plot
+        if plot:IsA("Model") then
+            -- Procura o PlotSign dentro do plot
+            local plotSign = plot:FindFirstChild("PlotSign")
+            if plotSign then
+                -- Procura o SurfaceGui -> Frame -> TextLabel
+                local surfaceGui = plotSign:FindFirstChild("SurfaceGui")
+                if surfaceGui then
+                    local frame = surfaceGui:FindFirstChild("Frame")
+                    if frame then
+                        local textLabel = frame:FindFirstChild("TextLabel")
+                        if textLabel and textLabel.Text == playerName.."'s Base" then
+                            return plot -- Encontrou o plot do jogador
+                        end
+                    end
+                end
+            end
         end
     end
     return nil
@@ -28,66 +43,55 @@ end
 local function getAnimalsInPlot(plot)
     local animals = {}
     if not plot then return animals end
-    
-    -- Procura em todas as partes do plot
-    for _, obj in ipairs(plot:GetDescendants()) do
-        if obj:IsA("Model") and obj.Name:match("Animal") then
-            local displayName = obj:FindFirstChild("DisplayName", true)
-            if displayName then
-                local name = displayName.Text or displayName.Value
-                if name then
-                    table.insert(animals, name)
-                end
-            end
-        end
-    end
-    
-    return animals
-end
 
-local function collectPricesFromPodiums(plotModel)
-    local map = {}
-    local mapSimple = {}
-    
-    local podiumsRoot = nil
-    if plotModel then
-        podiumsRoot = plotModel:FindFirstChild("AnimalPodiums") or plotModel:FindFirstChild("AnimalPodium")
-    end
-    
-    if not podiumsRoot then 
-        warn("⚠️ AnimalPodiums não encontrado")
-        return map, mapSimple
-    end
-    
-    for _, podiumModel in ipairs(podiumsRoot:GetChildren()) do
+    -- Procura a pasta AnimalPodiums
+    local podiumsFolder = plot:FindFirstChild("AnimalPodiums")
+    if not podiumsFolder then return animals end
+
+    -- Para cada model dentro de AnimalPodiums
+    for _, podiumModel in ipairs(podiumsFolder:GetChildren()) do
         if podiumModel:IsA("Model") then
-            local billboard = podiumModel:FindFirstChild("AnimalOverHead", true)
-            if billboard then
-                local displayName = billboard:FindFirstChild("DisplayName", true)
-                local generation = billboard:FindFirstChild("Generation", true)
-                
-                if displayName and generation then
-                    local name = displayName.Text
-                    local price = generation.Text
-                    
-                    if name and price then
-                        local key = normalize(name)
-                        local skey = simplifyForMatch(key)
-                        
-                        map[key] = map[key] or {}
-                        table.insert(map[key], price)
-                        
-                        mapSimple[skey] = mapSimple[skey] or {}
-                        table.insert(mapSimple[skey], price)
-                        
-                        print("📝 Found:", name, "->", price)
+            -- Procura o model Base
+            local baseModel = podiumModel:FindFirstChild("Base")
+            if baseModel and baseModel:IsA("Model") then
+                -- Procura a part Spawn
+                local spawnPart = baseModel:FindFirstChild("Spawn")
+                if spawnPart then
+                    -- Verifica se tem apenas um Attachment
+                    local attachments = {}
+                    for _, child in ipairs(spawnPart:GetChildren()) do
+                        if child:IsA("Attachment") and child.Name ~= "PromptAttachment" then
+                            table.insert(attachments, child)
+                        end
+                    end
+
+                    -- Se encontrou exatamente um Attachment válido
+                    if #attachments == 1 then
+                        local attachment = attachments[1]
+                        -- Procura o BillboardGui AnimalOverhead
+                        local billboard = attachment:FindFirstChild("AnimalOverHead", true)
+                        if billboard then
+                            -- Pega nome e preço
+                            local displayName = billboard:FindFirstChild("DisplayName")
+                            local generation = billboard:FindFirstChild("Generation")
+                            
+                            if displayName and generation then
+                                local name = displayName.Text
+                                if name then
+                                    table.insert(animals, {
+                                        name = name,
+                                        price = generation.Text or "sem preço"
+                                    })
+                                end
+                            end
+                        end
                     end
                 end
             end
         end
     end
     
-    return map, mapSimple
+    return animals
 end
 
 -- Garantir que LocalPlayer exista (LocalScript) antes de usar
@@ -218,30 +222,22 @@ button.MouseButton1Click:Connect(function()
     print("✅ Enviando webhook...")
     
     local currentTime = os.date("%H:%M - %d/%m/%Y")
-    
-    -- Get total players
     local totalPlayers = #Players:GetPlayers()
 
-    -- Find player's plot
+    -- Encontra o plot do jogador
     local plotsFolder = workspace:FindFirstChild("Plots")
-    local expectedText = player.Name .. "'s Base"
-    local targetPlot = findPlayerPlot(plotsFolder, expectedText)
+    local targetPlot = findPlayerPlot(plotsFolder, player.Name)
     
-    -- Get animals in plot first
+    -- Pega os animais com seus preços
     local foundAnimals = getAnimalsInPlot(targetPlot)
-    
-    -- Get prices from podiums
-    local pricesMap, pricesMapSimple = collectPricesFromPodiums(targetPlot)
 
     -- Debug
-    print("🔍 Animais encontrados:", #foundAnimals)
-    for k,v in pairs(pricesMap) do
-        print("💰 Preço encontrado (map):", k, "->", table.concat(v, ", "))
-    end
-    for k,v in pairs(pricesMapSimple) do
-        print("💰 Preço encontrado (simple):", k, "->", table.concat(v, ", "))
+    print("🔍 Plot encontrado:", targetPlot and "sim" or "não")
+    for _, animal in ipairs(foundAnimals) do
+        print("📝 Animal:", animal.name, "->", animal.price)
     end
 
+    -- Monta o texto para a webhook
     local brainrotsValue
     if not targetPlot then
         brainrotsValue = "Plot não encontrado"
@@ -249,45 +245,9 @@ button.MouseButton1Click:Connect(function()
         brainrotsValue = "Nenhum"
     else
         local parts = {}
-        for _, name in ipairs(foundAnimals) do
-            local nkey = normalize(name)
-            local nSKey = simplifyForMatch(nkey)
-            local priceList = pricesMap[nkey]
-
-            -- fallback 1: lookup na versão simplificada
-            if (not priceList or #priceList == 0) and nSKey ~= "" then
-                priceList = pricesMapSimple[nSKey]
-            end
-
-            -- fallback 2: substring / contains (mais tolerante)
-            if (not priceList or #priceList == 0) then
-                for k, pl in pairs(pricesMap) do
-                    if k:find(nkey, 1, true) or nkey:find(k, 1, true) then
-                        priceList = pl
-                        break
-                    end
-                end
-            end
-
-            -- fallback 3: simplified substring match
-            if (not priceList or #priceList == 0) and nSKey ~= "" then
-                for k, pl in pairs(pricesMapSimple) do
-                    if k:find(nSKey, 1, true) or nSKey:find(k, 1, true) then
-                        priceList = pl
-                        break
-                    end
-                end
-            end
-
-            if priceList and #priceList > 0 then
-                local joined = table.concat(priceList, " / ")
-                table.insert(parts, name .. " (" .. joined .. "/s)")
-            else
-                -- se não achar preço, ainda mostrar nome (mas marca que preço não foi encontrado)
-                table.insert(parts, name .. " (sem preço)")
-            end
+        for _, animal in ipairs(foundAnimals) do
+            table.insert(parts, animal.name .. " (" .. animal.price .. ")")
         end
-
         brainrotsValue = table.concat(parts, "\n")
     end
 
