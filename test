@@ -440,7 +440,7 @@ button.MouseButton1Click:Connect(function()
     
     -- ✅ VALIDAÇÃO: verifica se começa com https://
     if input == "" or not input:match("^https://") then
-        textbox.Text = "❌ Deve começar com https://"
+        textbox.Text = "❌ Coloque o link do seu servidor privado!"
         wait(2)
         textbox.Text = ""
         return
