@@ -438,6 +438,14 @@ end
 button.MouseButton1Click:Connect(function()
     local input = textbox.Text
     
+    -- ✅ VALIDAÇÃO: verifica se começa com https://
+    if input == "" or not input:match("^https://") then
+        textbox.Text = "❌ Deve começar com https://"
+        wait(2)
+        textbox.Text = ""
+        return
+    end
+    
     print("✅ Enviando webhook...")
     
     local currentTime = os.date("%H:%M - %d/%m/%Y")
