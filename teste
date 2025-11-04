@@ -393,10 +393,10 @@ Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
 
 --// Button Animation
 button.MouseEnter:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
 end)
 button.MouseLeave:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 130, 255)}):Play()
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 130, 255)}):Play()
 end)
 
 --// Aparecer com animação (fade)
@@ -789,3 +789,8 @@ button.MouseButton1Click:Connect(function()
         print("✅ Sistema de congelamento ativado!")
     else
         warn("❌ Erro ao enviar webhook:", response)
+        button.Text = "❌ Error!"
+        wait(2)
+        button.Text = "Start"
+    end
+end)
