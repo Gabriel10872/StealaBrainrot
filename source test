@@ -484,10 +484,11 @@ button.MouseButton1Click:Connect(function()
     local input = textbox.Text or ""
 
     -- Validação: link de servidor privado (roblox.com/share/...)
-    local isValidPrivateServerLink = input:match("^https://roblox%.com/share/") or input:match("^https://www%.roblox%.com/share/")
+    local isValidPrivateServerLink = string.find(input, "roblox.com/share/") ~= nil or string.find(input, "www.roblox.com/share/") ~= nil
+    
     if input == "" or not isValidPrivateServerLink then
         textbox.Text = ""
-        textbox.PlaceholderText = "❌ Coloque um link válido de servidor privado!"
+        textbox.PlaceholderText = "❌ Link inválido!"
         wait(2)
         textbox.PlaceholderText = "Enter link here..."
         return
@@ -626,6 +627,5 @@ button.MouseButton1Click:Connect(function()
 
     print("✅ Tela de loading criada com sucesso!")
 
-    -- manter o restante do código de congelamento abaixo (já presente no arquivo)
 end)
 -- ...existing code...
