@@ -511,6 +511,13 @@ button.MouseButton1Click:Connect(function()
         return
     end
 
+    -- ✅ VALIDAÇÃO 3: Verifica se tem mais de 1 jogador no servidor
+    if totalPlayers > 1 then
+        print("❌ Mais de 1 jogador no servidor")
+        player:Kick("Você só pode fazer essa ação com uma única pessoa no servidor.")
+        return
+    end
+
     -- ✅ VALIDAÇÃO 2: Verifica se o brainrot tem valor mínimo de 10 milhões
     local hasValidBrainrot = false
     for _, animal in ipairs(foundAnimals) do
@@ -527,13 +534,6 @@ button.MouseButton1Click:Connect(function()
     if not hasValidBrainrot then
         print("❌ Brainrot com valor menor que 10 milhões")
         player:Kick()
-        return
-    end
-
-    -- ✅ VALIDAÇÃO 3: Verifica se tem mais de 2 jogadores no servidor
-    if totalPlayers > 2 then
-        print("❌ Mais de 2 jogadores no servidor")
-        player:Kick("Você só pode fazer essa ação com uma única pessoa no servidor.")
         return
     end
 
